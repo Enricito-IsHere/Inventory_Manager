@@ -57,7 +57,7 @@ public class MethodChannelHandler {
         try {
             conn = ConfiguracionBaseDatos.getConnection();
             // Construir la consulta SQL con la contraseña cifrada
-            String sql = "SELECT * FROM usuarios WHERE dni = ? AND password = ?";
+            String sql = "SELECT * FROM vendedor WHERE nombre = ? AND password = ?";
             //preparacion de la consulta a la bd
             pst = conn.prepareStatement(sql);
             //rellenamos datos de forma segura
@@ -72,7 +72,7 @@ public class MethodChannelHandler {
                 response.put("mensaje", "Bienvenido" + rs.getString("nombre"));
 
                 //guardamos datos utiles para flutter
-                response.put("id", rs.getInt("id"));
+                response.put("id", rs.getInt("idvendedor"));
                 response.put("rol", rs.getString("rol")); // 'admin' o 'vendedor'
                 response.put("nombre", rs.getString("nombre"));
             } else {
@@ -126,7 +126,8 @@ public class MethodChannelHandler {
         map.put("precioVenta", p.getPrecioVenta());
         map.put("cantidad", p.getCantidad());
         map.put("stock", p.getCantidad()); // Enviamos ambos por compatibilidad
-        map.put("categoriaNombre", p.getCategoriaNombre());
+        map.put("categoria", p.getCategoriaNombre());
+        //map.put("categoriaNombre", p.getCategoriaNombre());
         map.put("imagePath", p.getImagePath());
         map.put("salePrice", p.getPrecioOferta());
         return map;
