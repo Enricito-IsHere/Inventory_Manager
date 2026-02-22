@@ -9,7 +9,7 @@ public interface VentaRepository {
     boolean delete(int id);
     Venta findById(int id);
     List<Venta> findAll();
-    List<Venta> findByCliente(String dniCliente);
+    List<Venta> findByNumeroBoleta(String numeroBoleta);
 
     //  registrar productos no encontrados
     void registrarProductoNoEncontrado(Integer idProductoSolicitado, String nombreProductoSolicitado, Integer vendedorId);
