@@ -9,7 +9,9 @@ import io.carpets.entidades.Producto;
 import io.carpets.repositories.ProductoRepository;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProductoRepositoryImplementacion implements ProductoRepository {
 
@@ -182,14 +184,14 @@ public class ProductoRepositoryImplementacion implements ProductoRepository {
      * @return Lista : Es una lista con todos los productos tipo List<Producto>
      */
     @Override
-    public List<Producto> findAll() {
-        List<Producto> lista = new ArrayList<>();
+    public List<Map<String, Object>> findAll() {
+        List<Map<String, Object>> lista = new ArrayList<>();
         String sql = "SELECT * FROM producto";
         try (Connection conn = ConfiguracionBaseDatos.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                lista.add(mapearProducto(rs));
+                lista.add(toMap(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -198,15 +200,15 @@ public class ProductoRepositoryImplementacion implements ProductoRepository {
     }
 
     @Override
-    public List<Producto> findByCategoria(String categoriaNombre) {
-        List<Producto> lista = new ArrayList<>();
+    public List<Map<String, Object>> findByCategoria(String categoriaNombre) {
+        List<Map<String, Object>> lista = new ArrayList<>();
         String sql = "SELECT * FROM producto WHERE categoria_nombre=?";
         try (Connection conn = ConfiguracionBaseDatos.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, categoriaNombre);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapearProducto(rs));
+                    lista.add(toMap(rs));
                 }
             }
         } catch (SQLException e) {
@@ -216,8 +218,8 @@ public class ProductoRepositoryImplementacion implements ProductoRepository {
     }
 
     @Override
-    public List<Producto> findByNombre(String nombre) {
-        List<Producto> lista = new ArrayList<>();
+    public List<Map<String, Object>> findByNombre(String nombre) {
+        List<Map<String, Object>> lista = new ArrayList<>();
         // Usamos LIKE ? para buscar coincidencias parciales
         String sql = "SELECT * FROM producto WHERE nombre LIKE ?";
         try (Connection conn = ConfiguracionBaseDatos.getConnection();
@@ -226,7 +228,7 @@ public class ProductoRepositoryImplementacion implements ProductoRepository {
             stmt.setString(1, "%" + nombre + "%");
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapearProducto(rs));
+                    lista.add(toMap(rs));
                 }
             }
         } catch (SQLException e) {
@@ -271,7 +273,27 @@ public class ProductoRepositoryImplementacion implements ProductoRepository {
         return false;
     }
 
-    // Método auxiliar para mapear ResultSet a Objeto
+    private Map<String, Object> toMap(ResultSet rs) throws SQLException{
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", rs.getInt("idproducto"));
+        map.put("nombre", rs.getString("nombre"));
+        map.put("precioCompra", rs.getDouble("precio_compra"));
+        map.put("precioVenta", rs.getDouble("precio_venta"));
+        map.put("cantidad", rs.getInt("cantidad"));
+        map.put("stock", rs.getInt("cantidad")); // Enviamos ambos por compatibilidad
+        map.put("categoria", rs.getString("categoria_nombre"));
+        map.put("imagePath", rs.getString("image_path"));
+
+        double Oferta = rs.getDouble("precio_oferta");
+
+        if(!rs.wasNull() && Oferta > 0){
+            map.put("salePrice", Oferta);
+        }else {
+            map.put("salePrice", null);
+        }
+
+        return map;
+    }
 
     /**
      * Recopila los datos de ResultSet y los convierte a un objeto Producto

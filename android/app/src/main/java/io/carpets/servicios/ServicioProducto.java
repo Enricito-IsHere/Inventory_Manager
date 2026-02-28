@@ -2,15 +2,16 @@ package io.carpets.servicios;
 
 import io.carpets.entidades.Producto;
 import java.util.List;
+import java.util.Map;
 
 public interface ServicioProducto {
 
 
     boolean validarStock(int productoId, int cantidad);
     void actualizarInventario(Producto producto);
-    List<Producto> obtenerTodos();
+    List<Map<String, Object>> obtenerTodos();
     Producto obtenerPorId(int id);
-    List<Producto> buscarProductos(String criterio, String tipo);
+    List<Map<String, Object>> buscarProductos(String criterio, String tipo);
 
     double getGananciaTotal();
 

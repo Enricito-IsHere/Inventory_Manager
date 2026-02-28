@@ -7,6 +7,7 @@ import io.carpets.servicios.ServicioProducto;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class ServicioProductoImplementacion implements ServicioProducto {
 
@@ -32,7 +33,7 @@ public class ServicioProductoImplementacion implements ServicioProducto {
      * @return Lista de productos
      */
     @Override
-    public List<Producto> obtenerTodos() {
+    public List<Map<String, Object>> obtenerTodos() {
         return repo.findAll();
     }
 
@@ -42,14 +43,14 @@ public class ServicioProductoImplementacion implements ServicioProducto {
     }
 
     @Override
-    public List<Producto> buscarProductos(String criterio, String tipo) {
+    public List<Map<String, Object>> buscarProductos(String criterio, String tipo) {
         if (criterio == null || criterio.trim().isEmpty()) {
             return repo.findAll();
         }
 
         if (tipo == null || "all".equalsIgnoreCase(tipo)) {
             // Búsqueda en todos los campos disponibles
-            List<Producto> resultados = new java.util.ArrayList<>();
+            List<Map<String, Object>> resultados = new java.util.ArrayList<>();
             resultados.addAll(repo.findByNombre(criterio));
             resultados.addAll(repo.findByCategoria(criterio));
             // Eliminar duplicados
@@ -117,7 +118,7 @@ public class ServicioProductoImplementacion implements ServicioProducto {
 
             // 6. Validar que no exista un producto con el mismo nombre (opcional)
             // Esto es opcional - depende si quieres nombres únicos
-            List<Producto> productosMismoNombre = repo.findByNombre(producto.getNombre().trim());
+            List<Map<String, Object>> productosMismoNombre = repo.findByNombre(producto.getNombre().trim());
             if (productosMismoNombre != null && !productosMismoNombre.isEmpty()) {
                 System.out.println("Ya existe un producto con el nombre: " + producto.getNombre());
                 return false;

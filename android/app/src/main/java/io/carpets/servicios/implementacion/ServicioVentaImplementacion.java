@@ -386,10 +386,12 @@ public class ServicioVentaImplementacion implements ServicioVenta {
         return existe;
     }
 
+    //No se usa, pero si se elimina, crashea por q es parte de la interface ServicioVenta
+    //Aún está a espera de revisión
     @Override
     public List<Producto> buscarProductoEnVentaPorIdONombre(String criterio) {
         List<Producto> resultado = new java.util.ArrayList<>();
-        if (criterio == null || criterio.trim().isEmpty()) return resultado;
+        /*if (criterio == null || criterio.trim().isEmpty()) return resultado;
 
         try {
             int id = Integer.parseInt(criterio);
@@ -410,7 +412,7 @@ public class ServicioVentaImplementacion implements ServicioVenta {
             if (productos.isEmpty()) {
                 ventaRepo.registrarProductoNoEncontrado(null, criterio, null);
             }
-        }
+        }*/
         return resultado;
     }
 

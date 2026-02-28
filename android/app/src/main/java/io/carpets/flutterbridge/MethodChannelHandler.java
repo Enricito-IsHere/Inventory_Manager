@@ -109,12 +109,13 @@ public class MethodChannelHandler {
      * @return Devuelve una lista de mapas<> con los productos. Tipo List< Map<String, Object> >Siendo Object los datos del producto.
      */
     public List<Map<String, Object>> obtenerProductos() {
-        List<Producto> productos = productoService.obtenerTodos();  //Se obtienen todos los productos
-        return productos.stream()                                   //stream() es un flujo de trabajo, la
+        List<Map<String, Object>> productos = productoService.obtenerTodos();  //Se obtienen todos los productos
+        return productos;
+        /*productos.stream()                                   //stream() es un flujo de trabajo, la
                                                                     // función que le envíes se le aplicará a todos los
                                                                     //elementos de la lista
                 .map(this::productoToMap)               //Se usa la función productoToMap para el stream
-                .collect(Collectors.toList());          //Recupera los datos y los hace una lista ( toList() )
+                .collect(Collectors.toList()); */         //Recupera los datos y los hace una lista ( toList() )
     }
 
     // Helper para convertir Producto a Map (Lo que Flutter entiende)
@@ -169,8 +170,8 @@ public class MethodChannelHandler {
 
     // Métodos de búsqueda y validación (Stubs funcionales)
     public List<Map<String, Object>> buscarProductos(String criterio, String tipo) {
-        List<Producto> productos = productoService.buscarProductos(criterio, tipo);
-        return productos.stream().map(this::productoToMap).collect(Collectors.toList());
+        List<Map<String, Object>> productos = productoService.buscarProductos(criterio, tipo);
+        return productos;
     }
 
     public boolean validarProductoExiste(int productoId) {
