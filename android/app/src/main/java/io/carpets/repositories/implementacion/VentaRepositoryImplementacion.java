@@ -7,6 +7,15 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.carpets.DTOs.VentaCompletaDTO;
+import io.carpets.DTOs.DetalleVentaDTO;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class VentaRepositoryImplementacion implements VentaRepository {
 
     @Override
@@ -167,5 +176,57 @@ public class VentaRepositoryImplementacion implements VentaRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    @Override
+    public List<VentaCompletaDTO> listarVentasConDetalles() {
+        // 1. SQL corregido con los nombres EXACTOS de tus imágenes y sin pedir cliente_dni
+        String sql = "SELECT v.idventa, v.numero_boleta, v.monto, v.fecha, " +
+                "d.cantidad, d.precio_unitario, " +
+                "p.nombre AS producto_nombre, p.image_path " +
+                "FROM venta v " +
+                "LEFT JOIN detalle_venta d ON v.idventa = d.venta_idventa " +
+                "LEFT JOIN producto p ON d.idproducto = p.idproducto " +
+                "ORDER BY v.idventa DESC";
+
+        Map<Integer, VentaCompletaDTO> ventasMap = new LinkedHashMap<>();
+
+        try (Connection conn = ConfiguracionBaseDatos.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                int idVenta = rs.getInt("idventa");
+
+                VentaCompletaDTO ventaDTO = ventasMap.computeIfAbsent(idVenta, k -> {
+                    VentaCompletaDTO nuevaVenta = new VentaCompletaDTO();
+                    nuevaVenta.setId(idVenta);
+                    try {
+                        nuevaVenta.setNumeroBoleta(rs.getString("numero_boleta"));
+                        nuevaVenta.setMonto(rs.getDouble("monto"));
+
+                        java.sql.Timestamp ts = rs.getTimestamp("fecha");
+                        nuevaVenta.setFecha(ts != null ? ts.toString() : "");
+
+                        // Como cliente_dni no existe en tu BD, enviamos un valor por defecto para no romper Flutter
+                        nuevaVenta.setClienteDni("Cliente General");
+                    } catch (SQLException e) { e.printStackTrace(); }
+                    return nuevaVenta;
+                });
+
+                if (rs.getObject("cantidad") != null) {
+                    DetalleVentaDTO detalleDTO = new DetalleVentaDTO();
+                    detalleDTO.setCantidad(rs.getInt("cantidad"));
+                    detalleDTO.setPrecio(rs.getDouble("precio_unitario"));
+                    detalleDTO.setNombreProducto(rs.getString("producto_nombre"));
+                    detalleDTO.setImagePath(rs.getString("image_path"));
+
+                    ventaDTO.getDetalles().add(detalleDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>(ventasMap.values());
     }
 }

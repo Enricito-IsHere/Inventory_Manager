@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import io.carpets.servicios.implementacion.*;
 import io.carpets.DTOs.BoletaVentaDTO;
 import io.carpets.DTOs.MontosCalculados;
+import io.carpets.DTOs.DetalleVentaDTO;
+import io.carpets.DTOs.VentaCompletaDTO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,6 +27,16 @@ public class MethodChannelHandler {
     private ServicioProducto productoService = new ServicioProductoImplementacion();
     private ServicioVenta ventaService = new ServicioVentaImplementacion();
     private ServicioCompra compraService = new ServicioCompraImplementacion();
+
+    private io.carpets.repositories.DetalleVentaRepository detalleVentaRepo =
+            new io.carpets.repositories.implementacion.DetalleVentaRepositoryImplementacion();
+
+    private io.carpets.repositories.ProductoRepository productoRepo =
+            new io.carpets.repositories.implementacion.ProductoRepositoryImplementacion();
+    private io.carpets.repositories.DetalleCompraRepository detalleCompraRepo =
+            new io.carpets.repositories.implementacion.DetalleCompraRepositoryImplementacion();
+
+
 
     // ========================================================================
     // SECCIÓN 1: AUTENTICACIÓN (LOGIN)
@@ -90,7 +102,7 @@ public class MethodChannelHandler {
                 if (pst != null) pst.close();
                 //no se cierra conN por si se hace uso de un pool compartido
                 //si se abre una por consulta; solo descomentar la siguiente linea de codigo:
-                //if (conn != null) conn.close();
+                if (conn != null) conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -227,52 +239,38 @@ public class MethodChannelHandler {
         }
     }
 
-    public Map<String, Object> listarVentas() {
+    public List<Map<String, Object>> listarVentas() {
         try {
-            List<Venta> ventas = ventaService.listarVentas();
+            // 1. Usamos tu nuevo método optimizado con DTOs
+            List<VentaCompletaDTO> ventasCompletas = ventaService.listarVentasConDetalles();
             List<Map<String, Object>> ventasMap = new ArrayList<>();
 
-            // Repositorio para buscar los detalles de cada venta
-            io.carpets.repositories.DetalleVentaRepository detalleRepo = new io.carpets.repositories.implementacion.DetalleVentaRepositoryImplementacion();
-            io.carpets.repositories.ProductoRepository productoRepo = new io.carpets.repositories.implementacion.ProductoRepositoryImplementacion();
-
-            for (Venta v : ventas) {
+            for (VentaCompletaDTO v : ventasCompletas) {
                 Map<String, Object> m = new HashMap<>();
                 m.put("id", v.getId());
-                m.put("numeroBoleta", v.getNumeroBoleta()); // Ahora será "Venta #..."
+                m.put("numeroBoleta", v.getNumeroBoleta());
                 m.put("monto", v.getMonto());
-                m.put("fecha", v.getFecha() != null ? v.getFecha().toString() : "");
+                m.put("fecha", v.getFecha() != null ? v.getFecha() : "");
                 m.put("clienteDni", v.getClienteDni());
 
-                // --- AGREGAMOS LOS DETALLES (PRODUCTOS) A LA RESPUESTA ---
-                List<io.carpets.entidades.DetalleVenta> detalles = detalleRepo.findByVenta(v.getId());
+                // 2. Extraemos los detalles que ya armaste en la memoria
                 List<Map<String, Object>> productosList = new ArrayList<>();
-
-                for (io.carpets.entidades.DetalleVenta d : detalles) {
+                for (DetalleVentaDTO d : v.getDetalles()) {
                     Map<String, Object> pMap = new HashMap<>();
                     pMap.put("cantidad", d.getCantidad());
-                    pMap.put("precio", d.getPrecioUnitario());
-
-                    // Buscamos el nombre del producto para mostrarlo bonito
-                    io.carpets.entidades.Producto p = productoRepo.findById(d.getProductoId());
-                    pMap.put("nombre", p != null ? p.getNombre() : "Producto Eliminado");
-                    pMap.put("imagePath", p != null ? p.getImagePath() : " ");
-
-
+                    pMap.put("precio", d.getPrecio());
+                    pMap.put("nombre", d.getNombreProducto());
+                    pMap.put("imagePath", d.getImagePath());
                     productosList.add(pMap);
                 }
-                m.put("detalles", productosList);
-                // ---------------------------------------------------------
 
+                m.put("detalles", productosList);
                 ventasMap.add(m);
             }
-
-            Map<String, Object> resultado = new HashMap<>();
-            resultado.put("status", "ok");
-            resultado.put("ventas", ventasMap);
-            return resultado;
+            return ventasMap;
         } catch (Exception e) {
-            return errorResponse(e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 
@@ -306,34 +304,32 @@ public class MethodChannelHandler {
 
     // 🟢 CORRECCIÓN: Devolvemos List<Map> en lugar de List<Compra>
     public List<Map<String, Object>> listarCompras() {
-        List<Compra> compras = compraService.listarCompras();
-        List<Map<String, Object>> listaMapas = new ArrayList<>();
+        try {
+            List<Compra> compras = compraService.listarCompras();
+            List<Map<String, Object>> listaMapas = new ArrayList<>();
 
-        // Repositorios para buscar la imagen asociada
-        io.carpets.repositories.DetalleCompraRepository detalleRepo = new io.carpets.repositories.implementacion.DetalleCompraRepositoryImplementacion();
-        io.carpets.repositories.ProductoRepository productoRepo = new io.carpets.repositories.implementacion.ProductoRepositoryImplementacion();
+            for (Compra c : compras) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", c.getId());
+                map.put("descripcion", c.getDescripcion());
+                map.put("monto", c.getMonto());
 
-        for (Compra c : compras) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", c.getId());
-            map.put("descripcion", c.getDescripcion());
-            map.put("monto", c.getMonto());
+                // CORRECCIÓN: Usamos detalleCompraRepo en lugar de detalleRepo
+                List<DetalleCompra> detalles = detalleCompraRepo.findByCompraId(c.getId());
 
-            // --- BÚSQUEDA DE IMAGEN ---
-            // Buscamos los detalles de esta compra para encontrar qué producto fue
-            List<DetalleCompra> detalles = detalleRepo.findByCompraId(c.getId());
-            if (detalles != null && !detalles.isEmpty()) {
-                // Tomamos el primer producto de la compra para mostrar su foto
-                Producto p = productoRepo.findById(detalles.get(0).getProductoId());
-                if (p != null) {
-                    map.put("imagePath", p.getImagePath()); // Enviamos la ruta
+                if (detalles != null && !detalles.isEmpty()) {
+                    Producto p = productoRepo.findById(detalles.get(0).getProductoId());
+                    if (p != null) {
+                        map.put("imagePath", p.getImagePath());
+                    }
                 }
+                listaMapas.add(map);
             }
-            // --------------------------
-
-            listaMapas.add(map);
+            return listaMapas;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
-        return listaMapas;
     }
     public Map<String, Object> eliminarDetalleCompra(int detalleId) {
         boolean exito = compraService.eliminarDetalleCompra(detalleId);

@@ -19,6 +19,8 @@ import io.carpets.repositories.implementacion.ClienteRepositoryImplementacion;
 import io.carpets.repositories.implementacion.UsuarioRepositoryImplementacion;
 import io.carpets.servicios.ServicioVenta;
 import io.carpets.util.ResponseUtil;
+import io.carpets.DTOs.VentaCompletaDTO;
+import io.carpets.DTOs.DetalleVentaDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +124,16 @@ public class ServicioVentaImplementacion implements ServicioVenta {
             e.printStackTrace();
             throw new RuntimeException("Error al registrar venta: " + e.getMessage());
         }
+    }
+
+    @Override
+    public List<VentaCompletaDTO> listarVentasConDetalles() {
+        return ventaRepo.listarVentasConDetalles();
+    }
+
+    @Override
+    public boolean eliminarDetalleVenta(int detalleId) {
+        return false;
     }
 
     /**

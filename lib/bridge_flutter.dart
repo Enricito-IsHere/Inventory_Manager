@@ -60,16 +60,17 @@ class BridgeFlutter {
   // -------- PRODUCTOS --------
 
   // Obtener lista (Usa el genérico _invoke para ser más rápido)
-  Future<JsonList> obtenerProductos() async {
-    //Recibe la lista de Mapas<Object?, Object?> de GetProducts
-    // Hacer que el mapa tenga otros tipo de dato puede llevar a errores.
-    // Es posible llamar a los elementos del mapa usando Mapa['llave']
+  Future<List<JsonMap>> obtenerProductos() async {
     JsonList? result = await _invoke<JsonList>(
         _channelProductos,
         AppConstants.methodGetProducts,
-        []
-    );
-    return result ?? []; // Si falla, devuelve lista vacía
+        []);
+
+    if (result == null) return [];
+
+    return result
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
   Future<BridgeResponse> agregarProducto(JsonMap producto) async {
@@ -93,7 +94,7 @@ class BridgeFlutter {
     return result ?? 0.0;
   }
 
-  // -------- VENTAS (Aquí estaba tu error en VentasPage) --------
+  // -------- VENTAS --------
 
   Future<BridgeResponse> registrarVenta(JsonMap venta, JsonList detalles) async {
     try {
@@ -127,26 +128,32 @@ class BridgeFlutter {
     return result ?? [];
   } */
   //trabajando
-  Future<BridgeResponse> listarVentas() async {
-    try {
-      final result = await _channelVenta.invokeMethod(AppConstants.methodListVentas, []);
+  Future<List<JsonMap>> listarVentas() async {
+    JsonList? result = await _invoke<JsonList>(
+        _channelVenta,
+        AppConstants.methodListVentas,
+        []);
 
-      if (result is Map) {
-        return BridgeResponse.fromMap(result);
-      }
-      // Si Java devuelve null o algo raro
-      return BridgeResponse(status: 'error', mensaje: 'Formato de respuesta inválido');
+    if (result == null) return [];
 
-    } catch (e) {
-      return BridgeResponse(status: 'error', mensaje: e.toString());
-    }
+    return result
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
   // -------- COMPRAS --------
 
-  Future<JsonList> listarCompras() async {
-    final result = await _invoke<JsonList>(_channelCompra, AppConstants.methodListCompras);
-    return result ?? [];
+  Future<List<JsonMap>> listarCompras() async {
+    final result = await _channelCompra.invokeMethod(
+      AppConstants.methodListCompras,
+    );
+
+    if (result == null) return [];
+
+    return (result as List)
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<BridgeResponse> registrarCompra(JsonMap compra, JsonList detalles) async {

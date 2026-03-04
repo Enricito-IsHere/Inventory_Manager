@@ -1,6 +1,6 @@
 import 'dart:ffi';
 
-import 'package:compact_dir/bridge_flutter.dart';
+import '../bridge_flutter.dart';
 
 import '../modelos/product_model.dart';
 import '../servicios/product_service.dart';

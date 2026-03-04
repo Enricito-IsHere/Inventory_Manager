@@ -3,7 +3,7 @@ package io.carpets.Configuracion;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import io.carpets.Configuracion.Credenciales;
+import io.carpets.Credenciales;
 
 import java.sql.Timestamp;
 
@@ -17,7 +17,7 @@ public class ConfiguracionBaseDatos {
     // Obtener conexión
     public static Connection getConnection() throws SQLException {
 
-        if (connection == null || connection.isClosed()) {
+        //if (connection == null || connection.isClosed()) {
             try {
                 // Cargar driver de MySQL
                 Class.forName("com.mysql.jdbc.Driver");
@@ -30,7 +30,7 @@ public class ConfiguracionBaseDatos {
                 e.printStackTrace();
                 throw new SQLException("Driver JDBC no encontrado.");
             }
-        }
+       // }
         return connection;
     }
     //necesitamos crear un time stamp dentro de las consultas para hacer el poryecto mas escalable y poderle sacar
