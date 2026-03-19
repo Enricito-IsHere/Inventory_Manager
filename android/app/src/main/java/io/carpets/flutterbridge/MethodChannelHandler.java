@@ -74,7 +74,7 @@ public class MethodChannelHandler {
                 Usuario.put("mensaje", "Bienvenido" + rs.getString("nombre"));
 
                 //guardamos datos utiles para flutter
-                Usuario.put("id", rs.getInt("idvendedor"));
+                Usuario.put("id", rs.getInt("id_vendedor"));
                 Usuario.put("rol", rs.getString("rol")); // 'admin' o 'vendedor'
                 Usuario.put("nombre", rs.getString("nombre"));
                 response.exito(Usuario);
