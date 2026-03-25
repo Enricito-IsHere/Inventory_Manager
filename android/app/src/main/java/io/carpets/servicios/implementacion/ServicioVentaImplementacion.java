@@ -124,6 +124,16 @@ public class ServicioVentaImplementacion implements ServicioVenta {
         }
     }
 
+    @Override
+    public List<VentaCompletaDTO> listarVentasConDetalles() {
+        return ventaRepo.listarVentasConDetalles();
+    }
+
+    @Override
+    public boolean eliminarDetalleVenta(int detalleId) {
+        return false;
+    }
+
     /**
      * Obtiene el próximo ID de venta (máximo ID actual + 1)
      */

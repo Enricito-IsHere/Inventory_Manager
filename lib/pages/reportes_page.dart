@@ -57,45 +57,51 @@ class _ReportesPageState extends State<ReportesPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await _bridge.listarVentas();
+      // 1. Recibimos la lista directamente
+      final ventas = await _bridge.listarVentas();
 
       // Validación flexible para soportar tanto Map como BridgeResponse
-      if (response.isSuccess) {
-        final dataMap = response.data as Map<String, dynamic>;
-        final List<dynamic> ventas = dataMap['ventas'] ?? [];
+      if (!mounted) return;
+      if (ventas.isNotEmpty) {
+        setState(() {
+          // Construir lista de Reportes
+          _allReports = ventas.map((v) {
+            DateTime date = DateTime.now();
+            try {
+              if (v['fecha'] != null) date = DateTime.parse(v['fecha'].toString());
+            } catch (_) {
+              print("Error parseando fecha: ${v['fecha']}");
+            }
+            double total = (v['monto'] ?? 0).toDouble();
+            // Calculamos IGV asumiendo que el monto incluye IGV (1.18)
+            double subtotal = total / 1.18;
+            double igv = total - subtotal;
 
-        // Construir lista de Reportes
-        _allReports = ventas.map((v) {
-          DateTime date = DateTime.now();
-          try {
-            if (v['fecha'] != null) date = DateTime.parse(v['fecha'].toString());
-          } catch (_) {
-            print("Error parseando fecha: ${v['fecha']}");
-          }
-
-          double total = (v['monto'] ?? 0).toDouble();
-          // Calculamos IGV asumiendo que el monto incluye IGV (1.18)
-          double subtotal = total / 1.18;
-          double igv = total - subtotal;
-
-          return Report(
-            id: v['id'].toString(),
-            productName: v['numeroBoleta'] ?? "Ticket #${v['id']}",
-            quantity: 1,
-            total: total,
-            subtotal: subtotal,
-            igv: igv,
-            date: date,
-            detalles: v['detalles'] ?? [],
-          );
-        }).toList();
-
+            return Report(
+              id: v['id'].toString(),
+              productName: v['numeroBoleta'] ?? "Ticket #${v['id']}",
+              quantity: 1,
+              total: total,
+              subtotal: subtotal,
+              igv: igv,
+              date: date,
+              detalles: v['detalles'] ?? [],
+            );
+          }).toList();
+          _isLoading = false; //para apagar el loader
+        });
         _applyFilters();
+      } else {
+          setState(() {
+            _isLoading = false;
+          });
       }
     } catch (e) {
       print("Error loading reports: $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // Si ocurre un error, también debemos apagar el loader
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

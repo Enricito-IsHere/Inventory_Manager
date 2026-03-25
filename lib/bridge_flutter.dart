@@ -108,7 +108,7 @@ class BridgeFlutter {
         : BridgeResponse.fromMap(result);
   }
 
-  // -------- VENTAS (Aquí estaba tu error en VentasPage) --------
+  // -------- VENTAS --------
 
   Future<BridgeResponse> registrarVenta(JsonMap venta, JsonList detalles) async {
     try {
@@ -138,9 +138,11 @@ class BridgeFlutter {
     return result ?? [];
   } */
   //trabajando
-  Future<BridgeResponse> listarVentas() async {
-    try {
-      final result = await _channelVenta.invokeMethod(AppConstants.methodListVentas, []);
+  Future<List<JsonMap>> listarVentas() async {
+    JsonList? result = await _invoke<JsonList>(
+        _channelVenta,
+        AppConstants.methodListVentas,
+        []);
 
       if (result == null) {
         return BridgeResponse().Internal_Error("BF.listarVentas: Resultado nulo, imposible seguir.");

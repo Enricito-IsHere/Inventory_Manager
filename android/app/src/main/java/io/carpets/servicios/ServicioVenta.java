@@ -5,6 +5,8 @@ import io.carpets.entidades.DetalleVenta;
 import io.carpets.entidades.Producto;
 import io.carpets.DTOs.MontosCalculados;
 import io.carpets.DTOs.BoletaVentaDTO;
+import io.carpets.DTOs.VentaCompletaDTO;
+import io.carpets.DTOs.DetalleVentaDTO;
 import java.util.List;
 
 public interface ServicioVenta {
@@ -12,6 +14,8 @@ public interface ServicioVenta {
     List<Venta> obtenerVentasPorDia(String fecha);
     List<Venta> obtenerVentasPorRango(String fechaInicio, String fechaFin);
     List<Producto> buscarProductoEnVentaPorIdONombre(String criterio);
+    List<VentaCompletaDTO> listarVentasConDetalles();
+    boolean eliminarDetalleVenta(int detalleId);
     boolean validarProductoExiste(int productoId);
 
     // Métodos para cálculos

@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import io.carpets.servicios.implementacion.*;
 import io.carpets.DTOs.BoletaVentaDTO;
 import io.carpets.DTOs.MontosCalculados;
+import io.carpets.DTOs.DetalleVentaDTO;
+import io.carpets.DTOs.VentaCompletaDTO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,6 +29,16 @@ public class MethodChannelHandler {
     private ServicioProducto productoService = new ServicioProductoImplementacion();
     private ServicioVenta ventaService = new ServicioVentaImplementacion();
     private ServicioCompra compraService = new ServicioCompraImplementacion();
+
+    private io.carpets.repositories.DetalleVentaRepository detalleVentaRepo =
+            new io.carpets.repositories.implementacion.DetalleVentaRepositoryImplementacion();
+
+    private io.carpets.repositories.ProductoRepository productoRepo =
+            new io.carpets.repositories.implementacion.ProductoRepositoryImplementacion();
+    private io.carpets.repositories.DetalleCompraRepository detalleCompraRepo =
+            new io.carpets.repositories.implementacion.DetalleCompraRepositoryImplementacion();
+
+
 
     // ========================================================================
     // SECCIÓN 1: AUTENTICACIÓN (LOGIN)
@@ -188,28 +200,23 @@ public class MethodChannelHandler {
         }
     }
 
-    public Map<String, Object> listarVentas() {
+    public List<Map<String, Object>> listarVentas() {
         try {
-            List<Venta> ventas = ventaService.listarVentas();
+            // 1. Usamos tu nuevo método optimizado con DTOs
+            List<VentaCompletaDTO> ventasCompletas = ventaService.listarVentasConDetalles();
             List<Map<String, Object>> ventasMap = new ArrayList<>();
 
-            // Repositorio para buscar los detalles de cada venta
-            io.carpets.repositories.DetalleVentaRepository detalleRepo = new io.carpets.repositories.implementacion.DetalleVentaRepositoryImplementacion();
-            io.carpets.repositories.ProductoRepository productoRepo = new io.carpets.repositories.implementacion.ProductoRepositoryImplementacion();
-
-            for (Venta v : ventas) {
+            for (VentaCompletaDTO v : ventasCompletas) {
                 Map<String, Object> m = new HashMap<>();
                 m.put("id", v.getId());
-                m.put("numeroBoleta", v.getNumeroBoleta()); // Ahora será "Venta #..."
+                m.put("numeroBoleta", v.getNumeroBoleta());
                 m.put("monto", v.getMonto());
-                m.put("fecha", v.getFecha() != null ? v.getFecha().toString() : "");
+                m.put("fecha", v.getFecha() != null ? v.getFecha() : "");
                 m.put("clienteDni", v.getClienteDni());
 
-                // --- AGREGAMOS LOS DETALLES (PRODUCTOS) A LA RESPUESTA ---
-                List<io.carpets.entidades.DetalleVenta> detalles = detalleRepo.findByVenta(v.getId());
+                // 2. Extraemos los detalles que ya armaste en la memoria
                 List<Map<String, Object>> productosList = new ArrayList<>();
-
-                for (io.carpets.entidades.DetalleVenta d : detalles) {
+                for (DetalleVentaDTO d : v.getDetalles()) {
                     Map<String, Object> pMap = new HashMap<>();
                     pMap.put("cantidad", d.getCantidad());
                     pMap.put("precio", d.getPrecioUnitario());
@@ -222,9 +229,8 @@ public class MethodChannelHandler {
 
                     productosList.add(pMap);
                 }
-                m.put("detalles", productosList);
-                // ---------------------------------------------------------
 
+                m.put("detalles", productosList);
                 ventasMap.add(m);
             }
 
@@ -233,7 +239,8 @@ public class MethodChannelHandler {
             resultado.put("Content", ventasMap);
             return resultado;
         } catch (Exception e) {
-            return errorResponse(e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 
